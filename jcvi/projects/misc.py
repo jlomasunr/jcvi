@@ -31,6 +31,7 @@ def main():
         ("mtdotplots", "plot Mt3.5 and Mt4.0 side-by-side"),
         # Oropetium paper (Vanburen et al., 2015 Nature)
         ("oropetium", "plot oropetium micro-synteny (requires data)"),
+        ("iceplant", "plot iceplant micro-synteny (requires data)"),
         # Pomegranate paper (Qin et al., 2017 Plant Journal)
         ("pomegranate", "plot pomegranate macro- and micro-synteny (requires data)"),
         # Unpublished
@@ -430,6 +431,65 @@ def oropetium(args):
     pf = "oropetium"
     image_name = pf + "." + iopts.format
     savefig(image_name, dpi=iopts.dpi, iopts=iopts)
+
+def iceplant(args):
+    """
+    %prog iceplant mcscan.out all.bed layout switch.ids
+
+    Build a composite figure that calls graphics.synteny.
+    """
+    p = OptionParser(iceplant.__doc__)
+    p.add_option("--extra", help="Extra features in BED format")
+    opts, args, iopts = p.set_image_options(args, figsize="9x6")
+
+    if len(args) != 3:
+        sys.exit(not p.print_help())
+
+    datafile, bedfile, slayout = args
+    fig = plt.figure(1, (iopts.w, iopts.h))
+    root = fig.add_axes([0, 0, 1, 1])
+
+    Synteny(
+        fig, root, datafile, bedfile, slayout, extra_features=opts.extra
+    )
+
+    # legend showing the orientation of the genes
+    draw_gene_legend(root, 0.4, 0.57, 0.74, text=True, repeat=True)
+
+    # On the left panel, make a species tree
+    fc = "lightslategrey"
+
+    coords = {}
+    xs, xp = 0.16, 0.03
+    coords["Mcr"] = (xs, 0.5)
+    coords["Ahy"] = (xs, 0.4)
+    coords["Bvu"] = (xs, 0.3)
+    coords["Cqu"] = (xs, 0.2)
+    coords["Sol"] = (xs, 0.1)
+    xs -= xp
+    coords["Chenopodioideae"] = join_nodes(root, coords, "Cqu", "Sol", xs)
+    coords["Betoideae"] = join_nodes(root, coords, "Bvu", "Chenopodioideae", xs)
+    coords["Amaranthaceae"] = join_nodes(root, coords, "Ahy", "Betoideae", xs)
+    coords["Poaceae"] = join_nodes(root, coords, "Mcr", "Amaranthaceae", xs)
+
+    # Names of the internal nodes
+    #for tag in ("BEP", "Poaceae"):
+    #    nx, ny = coords[tag]
+    #    nx, ny = nx - 0.005, ny - 0.02
+    #    root.text(nx, ny, tag, rotation=90, ha="right", va="top", color=fc)
+    #for tag in ("PACMAD",):
+    #    nx, ny = coords[tag]
+    #    nx, ny = nx - 0.005, ny + 0.02
+    #    root.text(nx, ny, tag, rotation=90, ha="right", va="bottom", color=fc)
+
+    root.set_xlim(0, 1)
+    root.set_ylim(0, 1)
+    root.set_axis_off()
+
+    pf = "iceplant"
+    image_name = pf + "." + iopts.format
+    savefig(image_name, dpi=iopts.dpi, iopts=iopts)
+
 
 
 def litchi(args):
